@@ -1231,6 +1231,10 @@ func (al *AgentLoop) runLLMIteration(
 				"target_channel": al.targetReasoningChannelID(opts.Channel),
 				"channel":        opts.Channel,
 			})
+
+		// Log usage for cost tracking
+		logUsage(agent.Workspace, agent.ID, activeModel, opts.Channel, response.Usage, len(response.ToolCalls), iteration)
+
 		// Check if no tool calls - then check reasoning content if any
 		if len(response.ToolCalls) == 0 {
 			finalContent = response.Content
@@ -1800,6 +1804,7 @@ func (al *AgentLoop) retryLLMCall(
 		}()
 
 		if err == nil && resp != nil && resp.Content != "" {
+			logUsage(agent.Workspace, agent.ID, agent.Model, "internal:summarize", resp.Usage, 0, attempt)
 			return resp, nil
 		}
 		if attempt < maxRetries-1 {
